@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحليل النص العربي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            display: flex;
+            flex-direction: row-reverse;
+        }
+        .input-section {
+            flex: 1;
+            margin-left: 20px;
+        }
+        .output-section {
+            flex: 1;
+            margin-right: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-size: 16px;
+            padding: 10px;
+            direction: rtl;
+        }
+        .char-boxes {
+            display: flex;
+            flex-direction: column; /* Arrange boxes vertically */
+            margin-top: 5px;
+        }
+        .char-box {
+            width: 70px; /* Smaller box size */
+            height: 35px; /* Smaller box size */
+            text-align: center;
+            line-height: 35px; /* Adjust line height for smaller box */
+            border: 1px solid #ccc;
+            margin: 2px 0; /* Reduce spacing between boxes */
+            font-size: 13px; /* Smaller font size */
+            background-color: #fff;
+            position: relative;
+        }
+        .char-box.zero {
+            color: red;
+        }
+        .char-box span.char {
+            font-weight: bold;
+        }
+        .char-box.nari {
+            background-color: #ffcccc;
+        }
+        .char-box.tarabi {
+            background-color: #ccffcc;
+        }
+        .char-box.hawaei {
+            background-color: #ccccff;
+        }
+        .char-box.maei {
+            background-color: #ffffcc;
+        }
+        .stats {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .element-section {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: row; /* Arrange columns horizontally */
+            align-items: flex-start; /* Align columns closely */
+        }
+        .element-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .element-row {
+            display: flex;
+            flex-direction: column; /* Arrange rows vertically */
+            margin-right: 10px; /* Small space between columns */
+        }
+        .element-header {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .element-stats {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Input Section -->
+    <div class="input-section">
+        <h2>ادخل النص العربي:</h2>
+        <textarea id="textInput" placeholder="اكتب النص هنا..."></textarea>
+        <button onclick="analyzeText()">تحليل النص</button>
+    </div>
+
+    <!-- Output Section -->
+    <div class="output-section">
+        <h2>تحليل الحروف:</h2>
+        <div class="element-section">
+            <div class="element-row">
+                <div class="element-header">الحروف النارية</div>
+                <div class="char-boxes" id="fireChars"></div>
+            </div>
+            <div class="element-row">
+                <div class="element-header">الحروف الترابية</div>
+                <div class="char-boxes" id="earthChars"></div>
+            </div>
+            <div class="element-row">
+                <div class="element-header">الحروف الهوائية</div>
+                <div class="char-boxes" id="airChars"></div>
+            </div>
+            <div class="element-row">
+                <div class="element-header">الحروف المائية</div>
+                <div class="char-boxes" id="waterChars"></div>
+            </div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="element-stats" id="elementStats"></div>
+    </div>
+</div>
+
+<script>
+    // Define the values of Arabic letters with merged groups and elements
+    const letterGroups = [
+        { chars: "اأإآ", value: 1, element: "ناري" },
+        { chars: "ب", value: 2, element: "ترابي" },
+        { chars: "ج", value: 3, element: "هوائي" },
+        { chars: "د", value: 4, element: "مائي" },
+        { chars: "ههـة", value: 5, element: "ناري" },
+        { chars: "وؤ", value: 6, element: "ترابي" },
+        { chars: "ز", value: 7, element: "هوائي" },
+        { chars: "ح", value: 8, element: "مائي" },
+        { chars: "ط", value: 9, element: "ناري" },
+        { chars: "يىئ", value: 10, element: "ترابي" },
+        { chars: "ك", value: 20, element: "هوائي" },
+        { chars: "ل", value: 30, element: "مائي" },
+        { chars: "م", value: 40, element: "ناري" },
+        { chars: "ن", value: 50, element: "ترابي" },
+        { chars: "س", value: 60, element: "هوائي" },
+        { chars: "ع", value: 70, element: "مائي" },
+        { chars: "ف", value: 80, element: "ناري" },
+        { chars: "ص", value: 90, element: "ترابي" },
+        { chars: "ق", value: 100, element: "هوائي" },
+        { chars: "ر", value: 200, element: "مائي" },
+        { chars: "ش", value: 300, element: "ناري" },
+        { chars: "ت", value: 400, element: "ترابي" },
+        { chars: "ث", value: 500, element: "هوائي" },
+        { chars: "خ", value: 600, element: "مائي" },
+        { chars: "ذ", value: 700, element: "ناري" },
+        { chars: "ض", value: 800, element: "ترابي" },
+        { chars: "ظ", value: 900, element: "هوائي" },
+        { chars: "غ", value: 1000, element: "مائي" }
+    ];
+
+    // Function to analyze the text
+    function analyzeText() {
+        const text = document.getElementById("textInput").value.trim();
+        const charCounts = {};
+        let totalChars = 0;
+        let totalValue = 0;
+
+        // Initialize character counts for each group
+        for (const group of letterGroups) {
+            charCounts[group.chars] = 0;
+        }
+
+        // Count characters and calculate total value
+        for (const char of text) {
+            for (const group of letterGroups) {
+                if (group.chars.includes(char)) {
+                    charCounts[group.chars]++;
+                    totalChars++;
+                    totalValue += group.value;
+                    break;
+                }
+            }
+        }
+
+        // Calculate word count (only Arabic words, ignore numbers and symbols)
+        const arabicWords = text.match(/[\u0600-\u06FF]+/g) || []; // Match only Arabic words
+        const wordCount = arabicWords.length;
+
+        // Display character boxes for each element
+        const elementsDivs = {
+            ناري: document.getElementById("fireChars"),
+            ترابي: document.getElementById("earthChars"),
+            هوائي: document.getElementById("airChars"),
+            مائي: document.getElementById("waterChars")
+        };
+
+        const elementCounts = {
+            ناري: 0,
+            ترابي: 0,
+            هوائي: 0,
+            مائي: 0
+        };
+
+        for (const element in elementsDivs) {
+            elementsDivs[element].innerHTML = "";
+        }
+
+        for (const group of letterGroups) {
+            const box = document.createElement("div");
+            box.className = `char-box ${group.element.toLowerCase()}`;
+            if (charCounts[group.chars] === 0) {
+                box.classList.add("zero");
+            }
+            box.innerHTML = `<span class="char">${group.chars}</span>: <span class="count">${charCounts[group.chars]}</span>`;
+            elementsDivs[group.element].appendChild(box);
+            elementCounts[group.element] += charCounts[group.chars];
+        }
+
+        // Display statistics
+        const statsDiv = document.getElementById("stats");
+        statsDiv.innerHTML = `
+            <p>عدد الحروف: ${totalChars}</p>
+            <p>عدد الكلمات: ${wordCount}</p>
+            <p>القيمة العددية الإجمالية: ${totalValue}</p>
+        `;
+
+        // Display element statistics
+        const elementStatsDiv = document.getElementById("elementStats");
+        elementStatsDiv.innerHTML = `
+            <div class="element-stats">
+                <p>عدد الحروف النارية: ${elementCounts["ناري"]}</p>
+                <p>عدد الحروف الترابية: ${elementCounts["ترابي"]}</p>
+                <p>عدد الحروف الهوائية: ${elementCounts["هوائي"]}</p>
+                <p>عدد الحروف المائية: ${elementCounts["مائي"]}</p>
+            </div>
+        `;
+    }
+
+    // Initialize character boxes on page load
+    window.onload = () => {
+        const elementsDivs = {
+            ناري: document.getElementById("fireChars"),
+            ترابي: document.getElementById("earthChars"),
+            هوائي: document.getElementById("airChars"),
+            مائي: document.getElementById("waterChars")
+        };
+
+        for (const element in elementsDivs) {
+            for (const group of letterGroups) {
+                if (group.element === element) {
+                    const box = document.createElement("div");
+                    box.className = `char-box ${group.element.toLowerCase()}`;
+                    box.innerHTML = `<span class="char">${group.chars}</span>: <span class="count">0</span>`;
+                    elementsDivs[element].appendChild(box);
+                }
+            }
+        }
+    };
+</script>
+
+</body>
+</html>
